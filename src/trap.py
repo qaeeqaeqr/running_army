@@ -4,7 +4,7 @@ import random
 
 class TrapBase(object):
     """
-    一个Trap类的示例代表地图上出现的一个陷阱。
+    一个Trap类的实例代表地图上出现的一个陷阱。
     """
     def __init__(self, x, y, speed):
         self.x = x
@@ -70,4 +70,35 @@ class Trap2(TrapBase):
         self.firex = self.current_frame // self.delay_times
         self.y += self.speed
         self.fire0.y = self.fire1.y = self.fire2.y = self.y
+
+
+class Trap3(TrapBase):
+    def __init__(self, x, y, speed):
+        super(Trap3, self).__init__(x, y, speed)
+        self.boss = Actor('game_scene/traps/trap3_boss')
+        self.boss_dying = Actor('game_scene/traps/trap3_boss_dying')
+        self.blowup = Actor('game_scene/traps/trap3_blowup')
+        self.boss.x = self.boss_dying.x = self.blowup.x = x
+        self.boss.y = self.boss_dying.y = self.blowup.y = y
+        self.life = 4
+
+        self.STATUS_metadata = ['normal', 'dying', 'blowup', 'blowed']
+        self.status = 0
+
+    def draw(self):
+        if self.status == 0:
+            self.boss.draw()
+        elif self.status == 1:
+            self.boss_dying.draw()
+        elif self.status == 2:
+            self.blowup.draw()
+        elif self.status == 3:
+            pass
+
+    def update(self):
+        self.y += self.speed
+        self.boss.y = self.y
+        if self.life <= 0:
+            self.status = 3
+
 

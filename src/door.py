@@ -30,27 +30,25 @@ class Door(object):
         if 0 <= r <= 0.25:
             self.op = '×'
             r_mult = random.random()
-            if 0 <= r_mult <= 0.3:
+            if 0 <= r_mult <= 0.6:
                 self.num = 2
-            elif 0.3 < r_mult <= 0.6:
+            elif 0.6 < r_mult <= 1:
                 self.num = 3
-            elif 0.6 < r_mult <= 0.85:
-                self.num = 4
-            elif 0.85 < r_mult <= 1:
-                self.num = 5
 
-        elif 0.25 < r <= 0.7:
+        elif 0.25 < r <= 0.5:
             self.op = '+'
             r_add = random.random()
-            for i in range(20):
-                if 0.05 * i <= r_add <= 0.05 * (i + 1):
+            add_range = 10
+            for i in range(add_range):
+                if 1 / add_range * i <= r_add <= 1 / add_range * (i + 1):
                     self.num = i + 1
 
-        elif 0.7 < r <= 0.85:
+        elif 0.5 < r <= 0.85:
             self.op = '-'
             r_sub = random.random()
-            for i in range(10):
-                if 0.1 * i <= r_sub <= 0.1 * (i + 1):
+            sub_range = 12
+            for i in range(sub_range):
+                if 1 / sub_range * i <= r_sub <= 1 / sub_range * (i + 1):
                     self.num = i + 1
 
         elif 0.85 < r <= 1:

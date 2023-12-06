@@ -2,11 +2,17 @@ from pgzero.builtins import Actor, animate, keyboard
 
 
 class Person(object):
-    def __init__(self, x, y, speed):
+    def __init__(self, x, y, speed, playeri):
         self.x = x
         self.y = y
         self.speed = speed
-        self.images = ['player_run/0', 'player_run/1', 'player_run/2', 'player_run/3']
+        self.playeri = playeri
+        self.image_folder = 'player' + str(self.playeri)
+        self.images = [self.image_folder + '/0',
+                       self.image_folder + '/1',
+                       self.image_folder + '/2',
+                       self.image_folder + '/3']
+        self.front_person = Actor(self.image_folder + '/person')
         self.current_running_image = 0
         self.delay_times = 6
         self.person = Actor(self.images[self.current_running_image])
@@ -15,6 +21,14 @@ class Person(object):
         if self.person.x < 100:
             return
         self.person.draw()
+
+    def update_skin(self):
+        self.image_folder = 'player' + str(self.playeri)
+        self.images = [self.image_folder + '/0',
+                       self.image_folder + '/1',
+                       self.image_folder + '/2',
+                       self.image_folder + '/3']
+        self.front_person = Actor(self.image_folder + '/person')
 
     def update(self):
         self.current_running_image = (self.current_running_image + 1) % (len(self.images) * self.delay_times)
@@ -35,6 +49,7 @@ class Player(object):
         self.right = 0
         self.up = 0  # 最上面人物到中心人物之间的距离
         self.down = 0
+        self.playeri = 0
 
         self.distance_between_persons = 10 + 3 / self.num_person
         self.arrangement = arrangement = [[121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111],
@@ -88,7 +103,16 @@ class Player(object):
             x_offset, y_offset = res[1] - 5, res[0] - 5
             self.persons.append(Person(self.x + x_offset * self.distance_between_persons,
                                        self.y + y_offset * self.distance_between_persons,
-                                       self.speed))
+                                       self.speed,
+                                       self.playeri))
+
+    def syn_person_movement(self):
+        """
+        当人数增加时，可能会导致不同的人处于行走的不同帧，使得整个军队看起来不整齐。故需要状态同步。
+        """
+        frame = self.persons[0].current_running_image
+        for i in range(len(self.persons)):
+            self.persons[i].current_running_image = frame
 
     def on_person_change(self, num):
         """
@@ -101,7 +125,8 @@ class Player(object):
                 x_offset, y_offset = res[1] - 5, res[0] - 5
                 self.persons.append(Person(self.x + x_offset * self.distance_between_persons,
                                            self.y + y_offset * self.distance_between_persons,
-                                           self.speed))
+                                           self.speed,
+                                           self.playeri))
             self.num_person = min(self.num_person + num, self.max_num_person)
         else:
             if abs(num) >= self.num_person:
@@ -111,6 +136,7 @@ class Player(object):
             for i in range(self.num_person - 1, self.num_person + num - 1, -1):
                 self.persons.pop(i)
             self.num_person += num
+        self.syn_person_movement()
 
     def draw(self, screen):
         # NOTE: 这里显示很重要。应该从上到下从左到右显示。
@@ -129,6 +155,12 @@ class Player(object):
         for i in range(self.num_person):
             self.persons[i].x = mouse_pos0 - self.x + self.persons[i].x
         self.x = mouse_pos0
+
+    def update_skin(self):
+        self.playeri = (self.playeri + 1) % 5
+        for i in range(self.num_person):
+            self.persons[i].playeri = self.playeri
+            self.persons[i].update_skin()
 
     def update(self):
         for i in range(self.num_person):

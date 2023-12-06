@@ -9,18 +9,19 @@ import os
 
 WIDTH = 400
 HEIGHT = 600
-TITLE = 'Run'
+TITLE = 'Game'
 
 STATUS_metadata = ['mainpage', 'game', 'setting']
 status = 0
-speed, init_person_num, win_person_num, music, sound = load_params()
+
+speed, init_person_num, win_person_num, music0, sound = load_params()
 
 mainpage = Mainpage()
 game = Game(WIDTH, HEIGHT, speed,
             init_person_num, win_person_num)
 setting = Settings()
 
-if music:
+if music0:
     sounds.game_music.play(-1)
 
 def draw():
@@ -43,7 +44,7 @@ def on_mouse_down(pos, button):
     """
     这里实现各个页面之间的相互跳转。
     """
-    global status, game
+    global status, game, speed, init_person_num, win_person_num, music0, sound
     if status == 0:
         event = mainpage.on_mouse_down(pos, button)
         if event == 'start':
@@ -61,11 +62,16 @@ def on_mouse_down(pos, button):
             status = 0
         if event == 'music_off' or event == 'music_on':
             process_music_switch(event, sounds)
+        if event == 'sound_off' or event == 'sound_on':
+            pass
+        if event == 'speed_add' or event == 'speed_sub':
+            speed, init_person_num, win_person_num, music0, sound = load_params()
+            game = Game(WIDTH, HEIGHT, speed, init_person_num, win_person_num)
 
 def update():
-    speed, init_person_num, win_person_num, music, sound = load_params()
+    speed, init_person_num, win_person_num, music0, sound = load_params()
     if status == 1:
-        game.update()
+        game.update(music, should_play_sound=sound)
     if status == 2:
         setting.update()
 

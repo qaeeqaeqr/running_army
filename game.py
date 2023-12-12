@@ -4,6 +4,7 @@ from pgzero.builtins import Actor, animate, keyboard, mouse
 import random
 from src.door import Door
 from src.player import Player
+from src.enemy import Enemy
 from src.trap import Trap1, Trap2, Trap3
 from src.progress import ProgressBar
 import time
@@ -38,6 +39,12 @@ class Game(object):
         self.bullet_speed = self.speed * 2
         self.player = Player(200, 400, speed,
                              num_person=num_person, max_num_person=max_num_person)
+        self.enemies = Enemy(200, 200, 3, 0)
+        self.enemy_pass = False
+        self.num_enemy_kill_player = 2
+        self.create_enemy_this_level = False
+        self.enemy_nums = [3, 6, 8, 10, 10]
+
         self.init_road()
         self.init_door()
         self.init_trap()
@@ -119,12 +126,28 @@ class Game(object):
             if bullet.y <= 0:
                 self.bullets.remove(bullet)
 
+    def enemies_update(self):
+        if self.progressbar.value == self.progressbar.max_value and not self.create_enemy_this_level:
+            self.enemies = Enemy(200, 100, 6, self.enemy_nums[self.level-1])
+            self.create_enemy_this_level = True
+
+        self.enemies.update(self.player.x, self.player.y)
+
 
     def level_update(self, is_level_update):
+        def no_enemy_in_screen():
+            for enemy in self.enemies.enemies:
+                if 0 < enemy.x < 450:
+                    return False
+            return True
+        if self.create_enemy_this_level and (len(self.enemies.enemies) == 0 or no_enemy_in_screen()):
+            self.enemy_pass = True
         if not is_level_update:
             return
 
         self.level += 1
+        self.create_enemy_this_level = False
+        self.enemy_pass = False
         if self.level > 5:
             self.is_win = True
             return
@@ -205,7 +228,19 @@ class Game(object):
                     music.play_once('fire_sound')
                 self.player.on_person_change(-decrease)
 
-    def detect_boss_bullet(self):
+    def detect_enemy_player(self, music, should_play_sound):
+        person_decrease = 0
+        for enemy in self.enemies.enemies:
+            for person in self.player.persons:
+                if person.person.colliderect(enemy.enemy):
+                    person_decrease += self.num_enemy_kill_player
+                    self.enemies.enemies.remove(enemy)
+                    break
+        if person_decrease and should_play_sound:
+            music.play_once('enemy_kill_sound')
+        self.player.on_person_change(-person_decrease)
+
+    def detect_boss_bullet(self, music, should_play_sound):
         for trap in self.traps:
             if not trap.__class__.__name__ == 'Trap3':
                 continue
@@ -217,6 +252,8 @@ class Game(object):
             if trap.life <= 0:
                 self.traps.remove(trap)
                 self.score += 1
+                if should_play_sound:
+                    music.play_once('boss_blow_sound')
 
     def shoot(self):
         if not self.intogame:
@@ -252,6 +289,7 @@ class Game(object):
         for bullet in self.bullets:
             bullet.draw()
         self.player.draw(screen)
+        self.enemies.draw()
 
         self.show_info(screen)
 
@@ -286,13 +324,15 @@ class Game(object):
         if self.is_win or self.is_lose:
             return
         self.level_update(self.progressbar.is_level_update)
-        self.progressbar.update(self.timer, self.level)
+        self.progressbar.update(self.timer, self.level, self.enemy_pass)
         self.bullet_update()
         self.player.update()
+        self.enemies_update()
         self.intogame = False
-        self.detect_boss_bullet()
+        self.detect_boss_bullet(music, should_play_sound)
         self.detect_door_player(music, should_play_sound)
         self.detect_trap_player(music, should_play_sound)
+        self.detect_enemy_player(music, should_play_sound)
         self.timer += 1
 
 

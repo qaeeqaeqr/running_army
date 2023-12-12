@@ -18,11 +18,11 @@ class ProgressBar:
         self.draw_text_timer = 0
         self.current_level = 1
 
-    def update(self, timer, cur_level):
+    def update(self, timer, cur_level, enemy_pass):
         self.current_level = cur_level
         if timer % self.delay == 0:
             self.value = self.value + 1 if self.value < self.max_value else self.max_value
-        if self.value == self.max_value:
+        if self.value == self.max_value and enemy_pass:
             self.able_level_update = True
 
         if self.is_level_update:
